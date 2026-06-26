@@ -21,96 +21,96 @@ def _make_ticket(customer_reply: str = "Our team will contact you.", recommended
 
 
 def test_english_pin_detected():
-    text, modified = scrub_reply("Please share your PIN with us.")
+    _, text, modified = scrub_reply("Please share your PIN with us.")
     assert modified
     assert "We never ask for your PIN, OTP, or password" in text
 
 
 def test_english_otp_detected():
-    text, modified = scrub_reply("Share your OTP so we can verify.")
+    _, text, modified = scrub_reply("Share your OTP so we can verify.")
     assert modified
     assert "We never ask for your PIN, OTP, or password" in text
 
 
 def test_english_password_detected():
-    text, modified = scrub_reply("Enter your password to proceed.")
+    _, text, modified = scrub_reply("Enter your password to proceed.")
     assert modified
     assert "We never ask for your PIN, OTP, or password" in text
 
 
 def test_refund_promise_detected():
-    text, modified = scrub_reply("We will refund you 500 taka.")
+    _, text, modified = scrub_reply("We will refund you 500 taka.")
     assert modified
     assert "eligible amount" in text
 
 
 def test_money_returned_detected():
-    text, modified = scrub_reply("Your money will be returned soon.")
+    _, text, modified = scrub_reply("Your money will be returned soon.")
     assert modified
     assert "eligible amount" in text
 
 
 def test_reversal_detected():
-    text, modified = scrub_reply("We will reverse the transaction.")
+    _, text, modified = scrub_reply("We will reverse the transaction.")
     assert modified
     assert "eligible amount" in text
 
 
 def test_unblock_detected():
-    text, modified = scrub_reply("Your account will be unblocked shortly.")
+    _, text, modified = scrub_reply("Your account will be unblocked shortly.")
     assert modified
 
 
 def test_third_party_contact_detected():
-    text, modified = scrub_reply("Please contact this number for help.")
+    _, text, modified = scrub_reply("Please contact this number for help.")
     assert modified
 
 
 def test_bangla_pin_detected():
-    text, modified = scrub_reply("আপনার পিন দিন।")
+    _, text, modified = scrub_reply("আপনার পিন দিন।")
     assert modified
     assert "পিন" not in text or "PIN" in text
 
 
 def test_bangla_refund_detected():
-    text, modified = scrub_reply("আমরা ফেরত দেব।")
+    _, text, modified = scrub_reply("আমরা ফেরত দেব।")
     assert modified
 
 
 def test_bangla_unblock_detected():
-    text, modified = scrub_reply("আপনার একাউন্ট খুলে দেওয়া হবে।")
+    _, text, modified = scrub_reply("আপনার একাউন্ট খুলে দেওয়া হবে।")
     assert modified
 
 
 def test_banglish_pin_detected():
-    text, modified = scrub_reply("apnar pin din.")
+    _, text, modified = scrub_reply("apnar pin din.")
     assert modified
 
 
 def test_banglish_refund_detected():
-    text, modified = scrub_reply("amra refund dibo.")
+    _, text, modified = scrub_reply("amra refund dibo.")
     assert modified
 
 
 def test_safe_text_unchanged():
-    text, modified = scrub_reply("Our team will review your case through official channels. Please keep your credentials private.")
+    _, text, modified = scrub_reply("Our team will review your case through official channels. Please keep your credentials private.")
     assert not modified
 
 
 def test_safe_bangla_unchanged():
-    text, modified = scrub_reply("আমাদের টিম আপনার কেস পর্যালোচনা করে অফিসিয়াল চ্যানেলে যোগাযোগ করবে। অনুগ্রহ করে কারো সাথে পিন বা ওটিপি শেয়ার করবেন না।")
+    _, text, modified = scrub_reply("আমাদের টিম আপনার কেস পর্যালোচনা করে অফিসিয়াল চ্যানেলে যোগাযোগ করবে। অনুগ্রহ করে কারো সাথে পিন বা ওটিপি শেয়ার করবেন না।")
     assert not modified
 
 
 def test_multiple_violations():
-    text, modified = scrub_reply("Share your PIN. We will refund you.")
+    _, text, modified = scrub_reply("Share your PIN. We will refund you.")
     assert modified
     assert "We never ask for your PIN, OTP, or password" in text
     assert "eligible amount" in text
 
 
 def test_case_insensitive():
-    text, modified = scrub_reply("SHARE YOUR PIN NOW.")
+    _, text, modified = scrub_reply("SHARE YOUR PIN NOW.")
     assert modified
 
 
@@ -147,6 +147,6 @@ def test_original_ticket_unchanged():
 
 
 def test_empty_text():
-    text, modified = scrub_reply("")
+    _, text, modified = scrub_reply("")
     assert not modified
     assert text == ""

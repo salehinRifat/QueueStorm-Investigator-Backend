@@ -4,18 +4,37 @@ from app.safety.banned_phrases import BANNED_PHRASES
 
 _MAX_ITERATIONS = 5
 
+_NEGATION_GUARD = re.compile(
+    r"\b(?:do\s+not|don't|does\s+not|doesn't|never|should\s+not|shouldn't)\s+"
+    r"(?:share|enter|give|provide)\b",
+    re.IGNORECASE,
+)
 
-def scrub_reply(text: str) -> tuple[str, bool]:
+
+def scrub_reply(text: str) -> tuple[str, str, bool]:
     """Scan text for banned phrases and rewrite offending sentences.
 
-    Returns (cleaned_text, was_modified).
+    Protects negated credential phrases (e.g. "do not share your PIN")
+    from being falsely flagged before applying banned-pattern regexes.
+
+    Returns (original_text, cleaned_text, was_modified).
     """
     if not text:
-        return text, False
+        return text, text, False
 
+    # Phase 1: protect negated credential phrases
+    placeholders: dict[str, str] = {}
+
+    def _protect(m: re.Match) -> str:
+        key = f"\x00PROTECT_{len(placeholders)}\x00"
+        placeholders[key] = m.group()
+        return key
+
+    protected = _NEGATION_GUARD.sub(_protect, text)
+
+    # Phase 2: apply banned phrase patterns
     modified = False
-    result = text
-
+    result = protected
     for pattern, replacement in BANNED_PHRASES:
         for _ in range(_MAX_ITERATIONS):
             new_text = pattern.sub(replacement, result, count=1)
@@ -24,7 +43,11 @@ def scrub_reply(text: str) -> tuple[str, bool]:
             result = new_text
             modified = True
 
-    return result, modified
+    # Phase 3: restore protected phrases
+    for key, val in placeholders.items():
+        result = result.replace(key, val)
+
+    return text, result, modified
 
 
 def check_safety(output: TicketOut) -> TicketOut:
@@ -34,8 +57,8 @@ def check_safety(output: TicketOut) -> TicketOut:
     """
     result = output.model_copy(deep=True)
 
-    reply_scrubbed, reply_modified = scrub_reply(result.customer_reply)
-    action_scrubbed, action_modified = scrub_reply(result.recommended_next_action)
+    _, reply_scrubbed, reply_modified = scrub_reply(result.customer_reply)
+    _, action_scrubbed, action_modified = scrub_reply(result.recommended_next_action)
 
     if reply_modified:
         result.customer_reply = reply_scrubbed
