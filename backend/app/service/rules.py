@@ -179,6 +179,25 @@ def detect_duplicate_pattern(history: list[TransactionIn]) -> str | None:
     return None
 
 
+CASE_TO_DEPARTMENT: dict[CaseType, Department] = {
+    CaseType.wrong_transfer: Department.dispute_resolution,
+    CaseType.payment_failed: Department.payments_ops,
+    CaseType.duplicate_payment: Department.payments_ops,
+    CaseType.merchant_settlement_delay: Department.merchant_operations,
+    CaseType.agent_cash_in_issue: Department.agent_operations,
+    CaseType.refund_request: Department.customer_support,
+    CaseType.phishing_or_social_engineering: Department.fraud_risk,
+    CaseType.other: Department.customer_support,
+}
+
+
+def _enforce_department(result: TicketOut) -> None:
+    expected = CASE_TO_DEPARTMENT.get(result.case_type)
+    if expected is not None and result.department != expected:
+        result.department = expected
+        _add_reason(result, "department_override")
+
+
 # ── Rule Overlay + Verifier ──
 
 _PHISHING_REPORT = re.compile(
@@ -280,4 +299,5 @@ def post_process_llm_output(
     result = candidate.model_copy(deep=True)
     _verify_llm_output(result, shortlist, flag)
     _apply_rules(result, complaint, history)
+    _enforce_department(result)
     return result
