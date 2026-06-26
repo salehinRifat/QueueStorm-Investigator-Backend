@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.enums import EvidenceVerdict, CaseType, Severity, Department
-from app.main import app
+from app.server import app
 from app.models.response import TicketOut
 
 client = TestClient(app)
